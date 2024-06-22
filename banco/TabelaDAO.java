@@ -1,13 +1,14 @@
 package banco;
 
+import classes.Tabela;
+import classes.Coluna;
+import classes.Tipo;
 import java.sql.SQLException;
 import java.util.List;
-import classes.Tabela;
-//iNTERFACE PARA GERENCIAR AS TABELAS DO BANCO, :)
 
-public interface TabelaDAO {
-    public void criarTabela(Tabela tabela) throws SQLException;
-    public void alterarTabela(Tabela tabela) throws SQLException;
-    public void removerTabela(String nomeTabela) throws SQLException;
-    List<Tabela> listarTabelas(String nomeBanco) throws SQLException;
+public interface TabelaDAO<T extends Tabela<? extends Coluna<? extends Tipo>>> {
+    void criarTabela(T tabela) throws SQLException;
+    void alterarTabela(T tabela, String operacao, Coluna<? extends Tipo> coluna) throws SQLException;
+    void removerTabela(String nomeTabela) throws SQLException;
+    List<T> listarTabelas(String nomeBanco) throws SQLException;
 }
