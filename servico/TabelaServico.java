@@ -12,37 +12,36 @@ import classes.ChaveFK;
 import classes.Coluna;
 import classes.Tabela;
 import conexao.ConexaoBD;
+import conexao.MySqlConfig;
+import conexao.EnumConexao;
 
 public class TabelaServico implements TabelaDAO {
-	//Criação, alteração e remoção de tabelas, ajustar esse erro 
-	
-	
-	
-	
-	
-	
-	//Erro : The method alterarTabela(Tabela, String, Coluna) of type TabelaServico must override or implement a supertype method 
-	
-	
-	
+    private ConexaoBD<MySqlConfig> conexaoBD;
+
+    public TabelaServico() {
+        MySqlConfig config = new MySqlConfig("localhost", 3306, EnumConexao.SQLCONNECTION, "root", "1234");
+        this.conexaoBD = new ConexaoBD<>(config);
+    }
+
     @Override
     public void criarTabela(Tabela tabela) throws SQLException {
-    	StringBuilder sql = new StringBuilder("CREATE TABLE " + tabela.getNome() + " (");
+        StringBuilder sql = new StringBuilder("CREATE TABLE " + tabela.getNome() + " (");
         List<String> colunaDefinicoes = new ArrayList<>();
         List<String> chavePrimaria = new ArrayList<>();
         for (Coluna coluna : tabela.getColunas()) {
             String definicaoColuna = coluna.getNome() + " " + coluna.getTipo();
             if (coluna.isChavePrimaria()) {
-            	chavePrimaria.add(coluna.getNome());
+                chavePrimaria.add(coluna.getNome());
                 definicaoColuna += " PRIMARY KEY";
             }
             colunaDefinicoes.add(definicaoColuna);
         }
-        sql.append(String.join(", ", colunaDefinicoes)).append(")");
+        sql.append(String.join(", ", colunaDefinicoes));
         if (!chavePrimaria.isEmpty()) {
             sql.append(", PRIMARY KEY (").append(String.join(", ", chavePrimaria)).append(")");
         }
-        try (Connection conn = ConexaoBD.getConnection();
+        sql.append(")");
+        try (Connection conn = conexaoBD.getConnection();
              Statement stmt = conn.createStatement()) {
             stmt.executeUpdate(sql.toString());
         }
@@ -65,7 +64,7 @@ public class TabelaServico implements TabelaDAO {
                 throw new IllegalArgumentException("Operação inválida: " + operacao);
         }
 
-        try (Connection conn = ConexaoBD.getConnection();
+        try (Connection conn = conexaoBD.getConnection();
              Statement stmt = conn.createStatement()) {
             stmt.executeUpdate(sql);
         }
@@ -74,27 +73,29 @@ public class TabelaServico implements TabelaDAO {
     @Override
     public void removerTabela(String nomeTabela) throws SQLException {
         String sql = "DROP TABLE " + nomeTabela;
-        try (Connection conn = ConexaoBD.getConnection();
+        try (Connection conn = conexaoBD.getConnection();
              Statement stmt = conn.createStatement()) {
             stmt.executeUpdate(sql);
         }
     }
+
     public void adicionarChaveEstrangeira(String nomeTabela, ChaveFK chaveEstrangeira) throws SQLException {
         String sql = "ALTER TABLE " + nomeTabela +
                      " ADD CONSTRAINT " + chaveEstrangeira.getNome() +
                      " FOREIGN KEY (" + chaveEstrangeira.getNome() + ") " +
                      " REFERENCES " + chaveEstrangeira.getReferenciaTabela() + "(" + chaveEstrangeira.getReferenciaColuna() + ")";
 
-        try (Connection conn = ConexaoBD.getConnection();
+        try (Connection conn = conexaoBD.getConnection();
              Statement stmt = conn.createStatement()) {
             stmt.executeUpdate(sql);
         }
     }
+
     @Override
     public List<Tabela> listarTabelas(String nomeBanco) throws SQLException {
         String sql = "SHOW TABLES";
         List<Tabela> tabelas = new ArrayList<>();
-        try (Connection conn = ConexaoBD.getConnection();
+        try (Connection conn = conexaoBD.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
 
