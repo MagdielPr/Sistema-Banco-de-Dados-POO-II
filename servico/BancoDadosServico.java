@@ -10,14 +10,21 @@ import java.util.List;
 import banco.BancoDadosDAO;
 import classes.BancoDados;
 import conexao.ConexaoBD;
+import conexao.MySqlConfig;
+import conexao.EnumConexao;
 
 public class BancoDadosServico implements BancoDadosDAO {
-//Criação e gerenciamento dos bancos criados pela conexão, que o usuario vai passar, preciso ajustar
-	
+    private ConexaoBD<MySqlConfig> conexaoBD;
+
+    public BancoDadosServico() {
+        MySqlConfig config = new MySqlConfig("localhost", 3306, EnumConexao.SQLCONNECTION, "root", "1234");
+        this.conexaoBD = new ConexaoBD<>(config);
+    }
+
     @Override
     public void criarBancoDados(BancoDados bancoDados) throws SQLException {
         String sql = "CREATE DATABASE " + bancoDados.getNome();
-        try (Connection conn = ConexaoBD.getConnection();
+        try (Connection conn = conexaoBD.getConnection();
              Statement stmt = conn.createStatement()) {
             stmt.executeUpdate(sql);
         }
@@ -26,7 +33,7 @@ public class BancoDadosServico implements BancoDadosDAO {
     @Override
     public void removerBancoDados(String nomeBanco) throws SQLException {
         String sql = "DROP DATABASE " + nomeBanco;
-        try (Connection conn = ConexaoBD.getConnection();
+        try (Connection conn = conexaoBD.getConnection();
              Statement stmt = conn.createStatement()) {
             stmt.executeUpdate(sql);
         }
@@ -36,7 +43,7 @@ public class BancoDadosServico implements BancoDadosDAO {
     public List<BancoDados> listarBancosDados() throws SQLException {
         String sql = "SHOW DATABASES";
         List<BancoDados> bancosDados = new ArrayList<>();
-        try (Connection conn = ConexaoBD.getConnection();
+        try (Connection conn = conexaoBD.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
 
