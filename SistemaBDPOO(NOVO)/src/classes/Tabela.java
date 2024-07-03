@@ -37,7 +37,9 @@ public class Tabela {
 
     public void removerColuna(Coluna coluna) {
         this.colunas.remove(coluna);
-        this.chavePrimaria.removeIf(pk -> pk.getNome().equals(coluna.getNome()));
+        if (coluna.isPrimaria()) {
+            this.chavePrimaria.removeIf(pk -> pk.getNome().equals(coluna.getNome()));
+        }
     }
 
     public List<ChavePK> getChavePrimaria() {
@@ -46,9 +48,6 @@ public class Tabela {
 
     public void setChavePrimaria(List<ChavePK> chavePrimaria) {
         this.chavePrimaria = chavePrimaria;
-        for (ChavePK pk : chavePrimaria) {
-            pk.setPrimaria(true);
-        }
     }
 
     public List<ChaveFK> getChavesEstrangeiras() {
