@@ -1,6 +1,7 @@
 package Teste;
 
 import classes.BancoDados;
+import classes.ChaveFK;
 import classes.Coluna;
 import classes.Tabela;
 import classes.TabelaAssociativa;
@@ -21,28 +22,25 @@ public class Main {
         try {
             String nomeBanco = "MeuBancoCasemiro";
             criarBancoDados(nomeBanco);
+            
+            // Criar tabela normal
+            Tabela tabela = criarTabela(nomeBanco, "MinhaTabelaTeste");
+            adicionarColuna(tabela, "Nome", Tipo.VARCHAR, 50, false, true, false, false);
+            adicionarColuna(tabela, "Descricao", Tipo.VARCHAR, 50, false, false, false, false);
+            adicionarColuna(tabela, "Idade", Tipo.INT, 12, false, false, false, false);
+            tabelaServico.criarTabela(nomeBanco, tabela);
 
-            Tabela tabela1 = criarTabela(nomeBanco, "Tabela1");
-            adicionarColuna(tabela1, "ID", Tipo.INT, 0, true, true, true);
-            adicionarColuna(tabela1, "Nome", Tipo.VARCHAR, 50);
-            tabelaServico.criarTabela(nomeBanco, tabela1);
-
-            Tabela tabela2 = criarTabela(nomeBanco, "Tabela2");
-            adicionarColuna(tabela2, "ID", Tipo.INT, 0, true, true, true);
-            adicionarColuna(tabela2, "Descricao", Tipo.VARCHAR, 50);
-            tabelaServico.criarTabela(nomeBanco, tabela2);
-
-            TabelaAssociativa tabelaAssociativa = criarTabelaAssociativa(nomeBanco, "TabelaAssociativa");
-            adicionarColuna(tabelaAssociativa, "Tabela1_ID", Tipo.INT, 0);
-            adicionarColuna(tabelaAssociativa, "Tabela2_ID", Tipo.INT, 0);
-            tabelaAssociativa.adicionarRelacao("Tabela1_ID", "Tabela1", "ID");
-            tabelaAssociativa.adicionarRelacao("Tabela2_ID", "Tabela2", "ID");
+            // Criar tabela associativa
+            TabelaAssociativa tabelaAssociativa = new TabelaAssociativa("TabelaAssociativa");
+            adicionarColuna(tabelaAssociativa, "Coluna1", Tipo.INT, 0, true, true, false, false);
+            adicionarColuna(tabelaAssociativa, "Coluna2", Tipo.INT, 0, true, true, false, false);
+            tabelaAssociativa.adicionarRelacao("Coluna1", "OutraTabela", "OutraColuna");
+            tabelaAssociativa.adicionarRelacao("Coluna2", "MaisOutraTabela", "MaisOutraColuna");
             tabelaServico.criarTabela(nomeBanco, tabelaAssociativa);
 
             listarTabelas(nomeBanco);
-            listarColunas(nomeBanco, "TabelaAssociativa");
-
             System.out.println("Dados adicionados!");
+            listarColunas(nomeBanco, "MinhaTabelaTeste");
         } catch (SQLException e) {
             System.out.println("Ocorreu um erro: " + e.getMessage());
         }
@@ -54,44 +52,41 @@ public class Main {
         System.out.println("Banco de dados " + nomeBanco + " criado com sucesso!");
     }
 
-    private static Tabela criarTabela(String nomeBanco, String nomeTabela) {
+    private static Tabela criarTabela(String nomeBanco, String nomeTabela) throws SQLException {
         Tabela tabela = new Tabela(nomeTabela);
         System.out.println("Tabela " + nomeTabela + " criada com sucesso no banco de dados " + nomeBanco);
         return tabela;
     }
 
-    private static TabelaAssociativa criarTabelaAssociativa(String nomeBanco, String nomeTabela) {
-        TabelaAssociativa tabelaAssociativa = new TabelaAssociativa(nomeTabela);
-        System.out.println("Tabela associativa " + nomeTabela + " criada com sucesso no banco de dados " + nomeBanco);
-        return tabelaAssociativa;
-    }
-
-    private static void adicionarColuna(Tabela tabela, String nomeColuna, Tipo tipo, int tamanho, boolean isPrimaria, boolean isAutoincre, boolean isNotnull) {
+    private static void adicionarColuna(Tabela tabela, String nomeColuna, Tipo tipo, int tamanho, boolean primaria, boolean notnull, boolean unique, boolean autoincre) throws SQLException {
         Coluna coluna = new Coluna(nomeColuna, tipo);
         coluna.setTamanho(tamanho);
-        coluna.setPrimaria(isPrimaria);
-        coluna.setAutoincre(isAutoincre);
-        coluna.setNotnull(isNotnull);
+        coluna.setPrimaria(primaria);
+        coluna.setNotnull(notnull);
+        coluna.setUnique(unique);
+        coluna.setAutoincre(autoincre);
         tabela.adicionarColuna(coluna);
+        System.out.println("-----------------");
         System.out.println("Coluna " + nomeColuna + " adicionada com sucesso à tabela " + tabela.getNome());
-    }
-
-    private static void adicionarColuna(Tabela tabela, String nomeColuna, Tipo tipo, int tamanho) {
-        adicionarColuna(tabela, nomeColuna, tipo, tamanho, false, false, false);
+        System.out.println("-----------------");
     }
 
     private static void listarColunas(String nomeBanco, String nomeTabela) throws SQLException {
         System.out.println("Colunas da tabela " + nomeTabela + " do banco de dados " + nomeBanco + ":");
-        for (Coluna<?> coluna : colunaServico.listarColunas(nomeTabela)) {
+        System.out.println("-----------------");
+        for (Coluna coluna : colunaServico.listarColunas(nomeTabela)) {
             System.out.println("- " + coluna.getNome() + " (" + coluna.getTipo() + ")");
         }
+        System.out.println("-----------------");
     }
 
     private static void listarTabelas(String nomeBanco) throws SQLException {
         System.out.println("Tabelas do banco de dados " + nomeBanco + ":");
         List<Tabela> tabelas = tabelaServico.listarTabelas(nomeBanco);
+        System.out.println("-----------------");
         for (Tabela tabela : tabelas) {
             System.out.println("- " + tabela.getNome());
         }
+        System.out.println("-----------------");
     }
 }
