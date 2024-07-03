@@ -9,7 +9,6 @@ import conexao.EnumConexao;
 import conexao.MySqlConfig;
 
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -28,9 +27,7 @@ public class TabelaServico implements TabelaDAO {
         StringBuilder sql = new StringBuilder("CREATE TABLE " + nomeBanco + "." + tabela.getNome() + " (");
         List<String> colunaDefinicoes = new ArrayList<>();
         List<String> chavePrimaria = new ArrayList<>();
-        List<String> chavesEstrangeiras = new ArrayList<>();
-        
-        for (Coluna<?> coluna : tabela.getColunas()) {
+        for (Coluna coluna : tabela.getColunas()) {
             String definicaoColuna = coluna.getNome() + " " + coluna.getTipo();
             if ("VARCHAR".equals(coluna.getTipo().toString())) {
                 definicaoColuna += "(" + coluna.getTamanho() + ")";
@@ -53,17 +50,11 @@ public class TabelaServico implements TabelaDAO {
         if (!chavePrimaria.isEmpty()) {
             sql.append(", PRIMARY KEY (").append(String.join(", ", chavePrimaria)).append(")");
         }
-
-        for (ChaveFK chaveEstrangeira : tabela.getChavesEstrangeiras()) {
-            chavesEstrangeiras.add("CONSTRAINT " + chaveEstrangeira.getNome() + " FOREIGN KEY (" + chaveEstrangeira.getNome() + ") REFERENCES " + chaveEstrangeira.getReferenciaTabela() + "(" + chaveEstrangeira.getReferenciaColuna() + ")");
+        for (ChaveFK chaveFK : tabela.getChavesEstrangeiras()) {
+            sql.append(", FOREIGN KEY (").append(chaveFK.getNome()).append(") REFERENCES ")
+               .append(chaveFK.getReferenciaTabela()).append("(").append(chaveFK.getReferenciaColuna()).append(")");
         }
-
-        if (!chavesEstrangeiras.isEmpty()) {
-            sql.append(", ").append(String.join(", ", chavesEstrangeiras));
-        }
-
         sql.append(")");
-        
         try (Connection conn = conexaoBD.getConnection();
              Statement stmt = conn.createStatement()) {
             stmt.executeUpdate(sql.toString());
@@ -71,7 +62,7 @@ public class TabelaServico implements TabelaDAO {
     }
 
     @Override
-    public void alterarTabela(String nomeBanco, Tabela tabela, String operacao, Coluna<?> coluna) throws SQLException {
+    public void alterarTabela(String nomeBanco, Tabela tabela, String operacao, Coluna coluna) throws SQLException {
         String sql;
         switch (operacao) {
             case "ADD":
@@ -102,21 +93,9 @@ public class TabelaServico implements TabelaDAO {
         }
     }
 
-    public void adicionarChaveEstrangeira(String nomeBanco, String nomeTabela, ChaveFK chaveEstrangeira) throws SQLException {
-        String sql = "ALTER TABLE " + nomeBanco + "." + nomeTabela +
-                     " ADD CONSTRAINT " + chaveEstrangeira.getNome() +
-                     " FOREIGN KEY (" + chaveEstrangeira.getNome() + ") " +
-                     " REFERENCES " + nomeBanco + "." + chaveEstrangeira.getReferenciaTabela() + "(" + chaveEstrangeira.getReferenciaColuna() + ")";
-
-        try (Connection conn = conexaoBD.getConnection();
-             Statement stmt = conn.createStatement()) {
-            stmt.executeUpdate(sql);
-        }
-    }
-
     @Override
     public List<Tabela> listarTabelas(String nomeBanco) throws SQLException {
-        String sql = "SHOW TABLES";
+        String sql = "SHOW TABLES FROM " + nomeBanco;
         List<Tabela> tabelas = new ArrayList<>();
         try (Connection conn = conexaoBD.getConnection();
              Statement stmt = conn.createStatement();
